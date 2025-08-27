@@ -1,24 +1,49 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Components
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import Products from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
+import Blogs from './pages/Blogs';
+import BlogDetail from './pages/BlogDetail';
+import Donations from './pages/Donations';
+import Cart from './pages/Cart';
+import Dashboard from './pages/Dashboard';
+import AuthCallback from './components/AuthCallback';
+import Login from './pages/Login';
+
+// Context
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AuthProvider>
+      <CartProvider>
+        <Router>
+          <div className="App">
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/blogs" element={<Blogs />} />
+              <Route path="/blogs/:id" element={<BlogDetail />} />
+              <Route path="/donations" element={<Donations />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/auth/success" element={<AuthCallback />} />
+            </Routes>
+            <ToastContainer />
+          </div>
+        </Router>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 
