@@ -1,82 +1,98 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import styled from 'styled-components';
-
-// Set base URL for API calls
-axios.defaults.baseURL = 'https://green-planet-moc.onrender.com';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { checkAuthStatus } = useAuth();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get token from URL query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
+        // Check if user is authenticated
+        await checkAuthStatus();
         
-        if (token) {
-          // Store token in localStorage
-          localStorage.setItem('token', token);
-          
-          // Set default authorization header for axios
-          axios.defaults.headers.common['x-auth-token'] = token;
-          
-          // Get user info
-          const res = await axios.get('/api/auth/me');
-          console.log('User logged in:', res.data);
-          
-          // Redirect to home page
-          navigate('/');
-        } else {
-          throw new Error('No token received');
-        }
-      } catch (err) {
-        console.error('Authentication error:', err);
-        navigate('/login', { state: { error: 'Authentication failed' } });
+        // Redirect to dashboard after successful authentication
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 2000);
+      } catch (error) {
+        console.error('Auth callback error:', error);
+        navigate('/login', { replace: true });
       }
     };
 
     handleAuthCallback();
-  }, [navigate]);
+  }, [navigate, checkAuthStatus]);
 
   return (
     <Container>
-      <LoadingSpinner>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </LoadingSpinner>
-      <Message>Completing authentication...</Message>
+      <MessageCard>
+        <SuccessIcon>✅</SuccessIcon>
+        <Title>Authentication Successful!</Title>
+        <Message>You are being redirected to your dashboard...</Message>
+        <LoadingSpinnerSmall>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </LoadingSpinnerSmall>
+      </MessageCard>
     </Container>
   );
 };
 
 const Container = styled.div`
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background: #f5f5f5;
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+  padding: 2rem;
 `;
 
-const LoadingSpinner = styled.div`
+const MessageCard = styled.div`
+  background: white;
+  padding: 3rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+`;
+
+const SuccessIcon = styled.div`
+  font-size: 4rem;
+  margin-bottom: 1rem;
+`;
+
+const Title = styled.h2`
+  color: #2e7d32;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+`;
+
+const Message = styled.p`
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+`;
+
+const LoadingSpinnerSmall = styled.div`
   display: inline-block;
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 40px;
+  height: 40px;
 
   div {
     box-sizing: border-box;
     display: block;
     position: absolute;
-    width: 64px;
-    height: 64px;
-    margin: 8px;
-    border: 8px solid #2e7d32;
+    width: 32px;
+    height: 32px;
+    margin: 4px;
+    border: 4px solid #2e7d32;
     border-radius: 50%;
     animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
     border-color: #2e7d32 transparent transparent transparent;
@@ -102,12 +118,6 @@ const LoadingSpinner = styled.div`
       transform: rotate(360deg);
     }
   }
-`;
-
-const Message = styled.p`
-  margin-top: 20px;
-  font-size: 18px;
-  color: #333;
 `;
 
 export default AuthCallback;

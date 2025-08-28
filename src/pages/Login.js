@@ -6,8 +6,11 @@ const Login = () => {
   const { loginWithGoogle } = useAuth();
 
   const handleGoogleLogin = (e) => {
-    e.preventDefault(); // Prevent default form behavior
-    loginWithGoogle();
+    e.preventDefault();
+    
+    // Use window.location to navigate to the backend endpoint
+    // This will trigger a full page redirect to Google OAuth
+    window.location.href = 'https://green-planet-moc.onrender.com/api/auth/google';
   };
 
   return (
@@ -32,6 +35,15 @@ const Login = () => {
         <Disclaimer>
           By signing in, you agree to our Terms of Service and Privacy Policy
         </Disclaimer>
+
+        <DebugInfo>
+          <DebugTitle>Debug Information</DebugTitle>
+          <DebugText>
+            Backend URL: https://green-planet-moc.onrender.com<br/>
+            API Endpoint: /api/auth/google<br/>
+            Clicking will redirect to Google OAuth
+          </DebugText>
+        </DebugInfo>
       </LoginCard>
     </Container>
   );
@@ -54,6 +66,7 @@ const LoginCard = styled.div`
   text-align: center;
   max-width: 400px;
   width: 100%;
+  position: relative;
 `;
 
 const Logo = styled.h1`
@@ -88,11 +101,17 @@ const GoogleButton = styled.button`
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s;
   gap: 0.5rem;
 
   &:hover {
     background: #357ae8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -107,6 +126,28 @@ const Disclaimer = styled.p`
   color: #999;
   font-size: 0.8rem;
   line-height: 1.4;
+`;
+
+const DebugInfo = styled.div`
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #2e7d32;
+`;
+
+const DebugTitle = styled.h4`
+  color: #2e7d32;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+`;
+
+const DebugText = styled.p`
+  color: #666;
+  font-family: monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
 `;
 
 export default Login;
