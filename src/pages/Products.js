@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from '../utils/axiosConfig'; // Use configured axios
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
@@ -23,8 +23,8 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      console.log('Fetching products from:', axios.defaults.baseURL);
       const res = await axios.get('/api/products');
+      console.log('Products API response:', res.data);
       setProducts(res.data);
       setFilteredProducts(res.data);
       
@@ -38,7 +38,7 @@ const Products = () => {
     } finally {
       setLoading(false);
     }
- 
+  };
 
   const handleSearch = (e) => {
     const term = e.target.value;
@@ -68,20 +68,29 @@ const Products = () => {
     alert(`${product.name} added to cart!`);
   };
 
-  // Function to handle image loading errors
+  // Improved image error handler
   const handleImageError = (e, product) => {
     console.log('Image failed to load:', e.target.src);
     
-    // Try to fix the URL if it has backslashes
+    // Try to fix common URL issues
     const originalSrc = e.target.src;
-    if (originalSrc && originalSrc.includes('\\')) {
-      const fixedUrl = originalSrc.replace(/\\/g, '/');
-      console.log('Trying fixed URL:', fixedUrl);
+    
+    // Fix double slashes
+    if (originalSrc.includes('//uploads//')) {
+      const fixedUrl = originalSrc.replace('//uploads//', '/uploads/');
       e.target.src = fixedUrl;
-    } else {
-      // Fallback to placeholder
-      e.target.src = '/placeholder-plant.jpg';
+      return;
     }
+    
+    // Fix backslashes
+    if (originalSrc.includes('\\')) {
+      const fixedUrl = originalSrc.replace(/\\/g, '/');
+      e.target.src = fixedUrl;
+      return;
+    }
+    
+    // Fallback to placeholder
+    e.target.src = '/placeholder-plant.jpg';
   };
 
   if (loading) {
@@ -157,11 +166,12 @@ const Products = () => {
             <ProductImageContainer>
               <ProductImage 
                 src={product.images && product.images[0] 
-                  ? product.images[0] // Use the full URL from backend
+                  ? product.images[0]
                   : '/placeholder-plant.jpg'
                 } 
                 alt={product.name}
                 onError={(e) => handleImageError(e, product)}
+                onLoad={(e) => console.log('Image loaded successfully:', e.target.src)}
               />
               <ProductOverlay>
                 <ViewButton to={`/products/${product._id}`}>Quick View</ViewButton>
@@ -214,16 +224,6 @@ const Products = () => {
           <NoProductsSubtext>Try adjusting your search or browse all categories</NoProductsSubtext>
         </NoProducts>
       )}
-
-      {/* Debug section - remove in production */}
-      <DebugSection>
-        <DebugTitle>Debug Information</DebugTitle>
-        <DebugText>
-          Total Products: {products.length}<br/>
-          Backend URL: {axios.defaults.baseURL}<br/>
-          Sample Image URL: {products[0]?.images?.[0] || 'No images'}
-        </DebugText>
-      </DebugSection>
     </Container>
   );
 };
