@@ -1,78 +1,63 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-
-// Set base URL for API calls
-axios.defaults.baseURL = 'https://green-planet-moc.onrender.com';
 
 const AuthContext = createContext();
 
-const authReducer = (state, action) => {
-  switch (action.type) {
-    case 'LOGIN_START':
-      return { ...state, loading: true, error: null };
-    case 'LOGIN_SUCCESS':
-      return { ...state, loading: false, user: action.payload, isAuthenticated: true };
-    case 'LOGIN_FAILURE':
-      return { ...state, loading: false, error: action.payload, isAuthenticated: false };
-    case 'LOGOUT':
-      return { ...state, user: null, isAuthenticated: false };
-    case 'CLEAR_ERROR':
-      return { ...state, error: null };
-    default:
-      return state;
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
+  return context;
 };
 
 export const AuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, {
-    user: null,
-    isAuthenticated: false,
-    loading: false,
-    error: null
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Check if user is logged in on app load
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.defaults.headers.common['x-auth-token'] = token;
-      getUser();
-    }
+    checkAuthStatus();
   }, []);
 
-  const getUser = async () => {
+  const checkAuthStatus = async () => {
     try {
-      const res = await axios.get('/api/auth/me');
-      dispatch({ type: 'LOGIN_SUCCESS', payload: res.data });
-    } catch (err) {
-      console.error('Error getting user:', err);
-      localStorage.removeItem('token');
-      delete axios.defaults.headers.common['x-auth-token'];
-      dispatch({ type: 'LOGOUT' });
+      const res = await axios.get('/api/auth/user', { withCredentials: true });
+      if (res.data.isAuthenticated) {
+        setUser(res.data.user);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const loginWithGoogle = () => {
-    console.log('Redirecting to Google OAuth...');
-    // Redirect to backend Google OAuth endpoint
-    window.location.href = 'https://green-planet-moc.onrender.com/api/auth/google';
+    // Clear any existing errors
+    window.location.href = '/api/auth/google';
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['x-auth-token'];
-    dispatch({ type: 'LOGOUT' });
+  const logout = async () => {
+    try {
+      await axios.get('/api/auth/logout', { withCredentials: true });
+      setUser(null);
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const value = {
+    user,
+    loginWithGoogle,
+    logout,
+    loading,
+    isAuthenticated: !!user
   };
 
   return (
-    <AuthContext.Provider value={{
-      ...state,
-      loginWithGoogle,
-      logout
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);
