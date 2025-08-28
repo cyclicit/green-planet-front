@@ -15,7 +15,7 @@ const AuthCallback = () => {
         
         // Redirect to dashboard after successful authentication
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          navigate('/', { replace: true });
         }, 2000);
       } catch (error) {
         console.error('Auth callback error:', error);
