@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from 'axios';
+import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
@@ -23,13 +23,13 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/products');
-      console.log('Products API response:', res.data);
-      setProducts(res.data);
-      setFilteredProducts(res.data);
+      const data = await api.getProducts();
+      console.log('Products API response:', data);
+      setProducts(data);
+      setFilteredProducts(data);
       
       // Extract unique categories
-      const uniqueCategories = [...new Set(res.data.map(product => product.category))];
+      const uniqueCategories = [...new Set(data.map(product => product.category))];
       setCategories(uniqueCategories);
       setError('');
     } catch (err) {

@@ -5,6 +5,19 @@ import styled from 'styled-components';
 const Cart = () => {
   const { items, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
 
+  // Add safety check for items
+  if (!items || items.length === 0) {
+    return (
+      <Container>
+        <Title>Shopping Cart</Title>
+        <EmptyCart>
+          <EmptyMessage>Your cart is empty</EmptyMessage>
+          <ContinueShopping href="/products">Continue Shopping</ContinueShopping>
+        </EmptyCart>
+      </Container>
+    );
+  }
+
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity < 1) {
       removeFromCart(productId);
@@ -17,18 +30,6 @@ const Cart = () => {
     alert('Thank you for your purchase! This is a demo - no actual payment will be processed.');
     clearCart();
   };
-
-  if (items.length === 0) {
-    return (
-      <Container>
-        <Title>Shopping Cart</Title>
-        <EmptyCart>
-          <EmptyMessage>Your cart is empty</EmptyMessage>
-          <ContinueShopping href="/products">Continue Shopping</ContinueShopping>
-        </EmptyCart>
-      </Container>
-    );
-  }
 
   return (
     <Container>
@@ -82,7 +83,6 @@ const Cart = () => {
     </Container>
   );
 };
-
 const Container = styled.div`
   max-width: 1000px;
   margin: 0 auto;

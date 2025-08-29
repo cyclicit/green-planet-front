@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const Dashboard = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('products');
-  const [message, setMessage] = useState('');
+  const [products, setProducts] = useState([]);
+  const [blogs, setBlogs] = useState([]);
+  const [donations, setDonations] = useState([]);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [showBlogForm, setShowBlogForm] = useState(false);
+  const [showDonationForm, setShowDonationForm] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // Product form state
+  const [message, setMessage] = useState('');
+  
+  // Form state variables
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
@@ -18,102 +24,108 @@ const Dashboard = () => {
     stock: '',
     image: null
   });
-
-  // Blog form state
+  
   const [blogForm, setBlogForm] = useState({
     title: '',
-    content: '',
     plantType: '',
-    cultivationTips: ''
+    content: '',
+    cultivationTips: '',
+    image: null
   });
-
-  // Donation form state
+  
   const [donationForm, setDonationForm] = useState({
     plantName: '',
     description: '',
-    location: ''
+    location: '',
+    images: []
   });
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [productsData, blogsData, donationsData] = await Promise.all([
+        api.getProducts(),
+        api.getBlogs(),
+        api.getDonations()
+      ]);
+      
+      setProducts(productsData);
+      setBlogs(blogsData);
+      setDonations(donationsData);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
  const handleProductSubmit = async (e) => {
   e.preventDefault();
-  setLoading(true);
-  setMessage('');
-  
   try {
+    setLoading(true);
+    setMessage('');
+    
+    // Create FormData for file upload
     const formData = new FormData();
     formData.append('name', productForm.name);
     formData.append('description', productForm.description);
     formData.append('price', productForm.price);
     formData.append('category', productForm.category);
     formData.append('stock', productForm.stock);
-    
     if (productForm.image) {
-      formData.append('image', productForm.image); // Make sure this is 'image' not 'images'
+      formData.append('image', productForm.image);
     }
 
-    console.log('FormData contents:');
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-
-    const response = await axios.post('/api/products', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'x-auth-token': localStorage.getItem('token')
-      }
+    const newProduct = await api.createProduct(formData);
+    setProducts([...products, newProduct]);
+    setProductForm({
+      name: '',
+      description: '',
+      price: '',
+      category: '',
+      stock: '',
+      image: null
     });
-    
-    setMessage('Product created successfully!');
-    setProductForm({ 
-      name: '', 
-      description: '', 
-      price: '', 
-      category: '', 
-      stock: '', 
-      image: null 
-    });
-    
-    // Clear file input
-    if (document.getElementById('product-image')) {
-      document.getElementById('product-image').value = '';
-    }
-    
+    setShowProductForm(false);
+    toast.success('Product created successfully!');
   } catch (error) {
-    console.error('Product creation error:', error);
-    const errorMsg = error.response?.data?.msg || 
-                    error.response?.data?.error || 
-                    error.message || 
-                    'Unknown error occurred';
-    setMessage('Error creating product: ' + errorMsg);
+    console.error('Error creating product:', error);
+    const errorMsg = error.message || 'Failed to create product';
+    toast.error(errorMsg);
+    setMessage(`Error: ${errorMsg}`);
   } finally {
     setLoading(false);
   }
 };
 
+
   const handleBlogSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    
     try {
-      console.log('Submitting blog data:', blogForm);
-      
-      const response = await axios.post('/api/blogs', blogForm, {
-        headers: {
-          'x-auth-token': localStorage.getItem('token')
-        }
+      setLoading(true);
+      setMessage('');
+      const newBlog = await api.createBlog(blogForm);
+      setBlogs([...blogs, newBlog]);
+      setBlogForm({
+        title: '',
+        plantType: '',
+        content: '',
+        cultivationTips: '',
+        image: null
       });
-      
-      setMessage('Blog post created successfully!');
-      setBlogForm({ title: '', content: '', plantType: '', cultivationTips: '' });
-      
+      toast.success('Blog post created successfully!');
     } catch (error) {
-      console.error('Blog creation error:', error);
-      const errorMsg = error.response?.data?.msg || 
-                      error.response?.data?.error || 
-                      error.message || 
-                      'Unknown error occurred';
-      setMessage('Error creating blog: ' + errorMsg);
+      console.error('Error creating blog:', error);
+      const errorMsg = error.response?.data?.msg || error.message || 'Failed to create blog post';
+      toast.error(errorMsg);
+      setMessage(`Error: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -121,28 +133,23 @@ const Dashboard = () => {
 
   const handleDonationSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    
     try {
-      console.log('Submitting donation data:', donationForm);
-      
-      const response = await axios.post('/api/donations', donationForm, {
-        headers: {
-          'x-auth-token': localStorage.getItem('token')
-        }
+      setLoading(true);
+      setMessage('');
+      const newDonation = await api.createDonation(donationForm);
+      setDonations([...donations, newDonation]);
+      setDonationForm({
+        plantName: '',
+        description: '',
+        location: '',
+        images: []
       });
-      
-      setMessage('Donation post created successfully!');
-      setDonationForm({ plantName: '', description: '', location: '' });
-      
+      toast.success('Donation post created successfully!');
     } catch (error) {
-      console.error('Donation creation error:', error);
-      const errorMsg = error.response?.data?.msg || 
-                      error.response?.data?.error || 
-                      error.message || 
-                      'Unknown error occurred';
-      setMessage('Error creating donation post: ' + errorMsg);
+      console.error('Error creating donation:', error);
+      const errorMsg = error.response?.data?.msg || error.message || 'Failed to create donation post';
+      toast.error(errorMsg);
+      setMessage(`Error: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -203,8 +210,9 @@ const Dashboard = () => {
             <FormTitle>Add New Product</FormTitle>
             
             <FormGroup>
-              <Label>Product Name *</Label>
+              <Label htmlFor="product-name">Product Name *</Label>
               <Input
+                id="product-name"
                 type="text"
                 value={productForm.name}
                 onChange={(e) => setProductForm({...productForm, name: e.target.value})}
@@ -214,8 +222,9 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Description *</Label>
+              <Label htmlFor="product-description">Description *</Label>
               <Textarea
+                id="product-description"
                 value={productForm.description}
                 onChange={(e) => setProductForm({...productForm, description: e.target.value})}
                 required
@@ -225,8 +234,9 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Price ($) *</Label>
+              <Label htmlFor="product-price">Price ($) *</Label>
               <Input
+                id="product-price"
                 type="number"
                 step="0.01"
                 min="0"
@@ -238,8 +248,9 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Category *</Label>
+              <Label htmlFor="product-category">Category *</Label>
               <Select
+                id="product-category"
                 value={productForm.category}
                 onChange={(e) => setProductForm({...productForm, category: e.target.value})}
                 required
@@ -257,8 +268,9 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Stock Quantity *</Label>
+              <Label htmlFor="product-stock">Stock Quantity *</Label>
               <Input
+                id="product-stock"
                 type="number"
                 min="0"
                 value={productForm.stock}
@@ -269,7 +281,7 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Product Image</Label>
+              <Label htmlFor="product-image">Product Image</Label>
               <Input
                 id="product-image"
                 type="file"
@@ -290,8 +302,9 @@ const Dashboard = () => {
             <FormTitle>Write a Blog Post</FormTitle>
             
             <FormGroup>
-              <Label>Title *</Label>
+              <Label htmlFor="blog-title">Title *</Label>
               <Input
+                id="blog-title"
                 type="text"
                 value={blogForm.title}
                 onChange={(e) => setBlogForm({...blogForm, title: e.target.value})}
@@ -301,8 +314,9 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Plant Type *</Label>
+              <Label htmlFor="blog-plantType">Plant Type *</Label>
               <Input
+                id="blog-plantType"
                 type="text"
                 value={blogForm.plantType}
                 onChange={(e) => setBlogForm({...blogForm, plantType: e.target.value})}
@@ -313,8 +327,9 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Content *</Label>
+              <Label htmlFor="blog-content">Content *</Label>
               <Textarea
+                id="blog-content"
                 rows="6"
                 value={blogForm.content}
                 onChange={(e) => setBlogForm({...blogForm, content: e.target.value})}
@@ -325,13 +340,25 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Cultivation Tips *</Label>
+              <Label htmlFor="blog-cultivationTips">Cultivation Tips *</Label>
               <Textarea
+                id="blog-cultivationTips"
                 rows="4"
                 value={blogForm.cultivationTips}
                 onChange={(e) => setBlogForm({...blogForm, cultivationTips: e.target.value})}
                 required
                 placeholder="Share tips on how to grow and care for this plant..."
+                disabled={loading}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="blog-image">Blog Image</Label>
+              <Input
+                id="blog-image"
+                type="file"
+                onChange={(e) => setBlogForm({...blogForm, image: e.target.files[0]})}
+                accept="image/*"
                 disabled={loading}
               />
             </FormGroup>
@@ -347,8 +374,9 @@ const Dashboard = () => {
             <FormTitle>Post a Plant for Donation</FormTitle>
             
             <FormGroup>
-              <Label>Plant Name *</Label>
+              <Label htmlFor="donation-plantName">Plant Name *</Label>
               <Input
+                id="donation-plantName"
                 type="text"
                 value={donationForm.plantName}
                 onChange={(e) => setDonationForm({...donationForm, plantName: e.target.value})}
@@ -358,8 +386,9 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Description *</Label>
+              <Label htmlFor="donation-description">Description *</Label>
               <Textarea
+                id="donation-description"
                 rows="4"
                 value={donationForm.description}
                 onChange={(e) => setDonationForm({...donationForm, description: e.target.value})}
@@ -370,13 +399,26 @@ const Dashboard = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Location *</Label>
+              <Label htmlFor="donation-location">Location *</Label>
               <Input
+                id="donation-location"
                 type="text"
                 value={donationForm.location}
                 onChange={(e) => setDonationForm({...donationForm, location: e.target.value})}
                 required
                 placeholder="Your city or area for pickup"
+                disabled={loading}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="donation-images">Plant Images</Label>
+              <Input
+                id="donation-images"
+                type="file"
+                multiple
+                onChange={(e) => setDonationForm({...donationForm, images: Array.from(e.target.files)})}
+                accept="image/*"
                 disabled={loading}
               />
             </FormGroup>

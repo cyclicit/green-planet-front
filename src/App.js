@@ -16,7 +16,7 @@ import Dashboard from './pages/Dashboard';
 import AuthCallback from './components/AuthCallback';
 import Login from './pages/Login';
 
-// Context
+// Context - IMPORT NAMED EXPORTS
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from 'axios';
+import { api } from '../utils/api';
 
 const Blogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -15,8 +15,8 @@ const Blogs = () => {
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/blogs');
-      setBlogs(res.data);
+      const data = await api.getBlogs();
+      setBlogs(data);
       setError('');
     } catch (err) {
       console.error('Error fetching blogs:', err);

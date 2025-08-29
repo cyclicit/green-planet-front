@@ -1,17 +1,48 @@
-import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 const Login = () => {
-  const { loginWithGoogle } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleGoogleLogin = (e) => {
+  const handleGoogleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null);
     
-    // Use window.location to navigate to the backend endpoint
-    // This will trigger a full page redirect to Google OAuth
-    window.location.href = 'https://green-planet-moc.onrender.com/api/auth/google';
+    try {
+      console.log('Testing backend connection...');
+      
+      // First test if backend is reachable
+      const healthResponse = await fetch('https://green-planet-moc.onrender.com/api/health');
+      
+      if (!healthResponse.ok) {
+        throw new Error('Backend server is not responding properly');
+      }
+      
+      console.log('Backend is healthy, redirecting to Google OAuth...');
+      
+      // Use window.open instead of location.href to avoid potential blocking
+      window.open(
+        'https://green-planet-moc.onrender.com/api/auth/google', 
+        '_self' // Open in same tab
+      );
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.message);
+      setIsLoading(false);
+    }
   };
+
+  const handleGoogleAuth = async () => {
+  try {
+
+    window.location.href = `https://green-planet-moc.onrender.com/api/auth/google`;
+  } catch (error) {
+    console.error('Google auth error:', error);
+  }
+};
 
   return (
     <Container>
@@ -20,7 +51,13 @@ const Login = () => {
         <Title>Sign In</Title>
         <Subtitle>Welcome back to your plant paradise</Subtitle>
         
-        <GoogleButton onClick={handleGoogleLogin}>
+        {error && (
+          <ErrorAlert>
+            <strong>Error:</strong> {error}
+          </ErrorAlert>
+        )}
+        
+        <GoogleButton onClick={handleGoogleLogin} disabled={isLoading}>
           <GoogleIcon>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px">
               <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
@@ -29,7 +66,7 @@ const Login = () => {
               <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
             </svg>
           </GoogleIcon>
-          Sign in with Google
+          {isLoading ? 'Connecting...' : 'Sign in with Google'}
         </GoogleButton>
         
         <Disclaimer>
@@ -41,7 +78,7 @@ const Login = () => {
           <DebugText>
             Backend URL: https://green-planet-moc.onrender.com<br/>
             API Endpoint: /api/auth/google<br/>
-            Clicking will redirect to Google OAuth
+            Status: {isLoading ? 'Connecting...' : error ? 'Error' : 'Ready'}
           </DebugText>
         </DebugInfo>
       </LoginCard>
@@ -49,6 +86,41 @@ const Login = () => {
   );
 };
 
+// Add these styled components
+const ErrorAlert = styled.div`
+  background: #ffebee;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #c62828;
+  text-align: left;
+  font-size: 0.9rem;
+`;
+
+const DebugInfo = styled.div`
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #2e7d32;
+`;
+
+const DebugTitle = styled.h4`
+  color: #2e7d32;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+`;
+
+const DebugText = styled.p`
+  color: #666;
+  font-family: monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+`;
+
+// Your existing styled components remain the same...
 const Container = styled.div`
   display: flex;
   justify-content: center;
@@ -113,6 +185,13 @@ const GoogleButton = styled.button`
   &:active {
     transform: translateY(0);
   }
+
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 `;
 
 const GoogleIcon = styled.span`
@@ -126,28 +205,6 @@ const Disclaimer = styled.p`
   color: #999;
   font-size: 0.8rem;
   line-height: 1.4;
-`;
-
-const DebugInfo = styled.div`
-  margin-top: 2rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #2e7d32;
-`;
-
-const DebugTitle = styled.h4`
-  color: #2e7d32;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-`;
-
-const DebugText = styled.p`
-  color: #666;
-  font-family: monospace;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  margin: 0;
 `;
 
 export default Login;

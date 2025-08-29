@@ -1,113 +1,126 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 import styled from 'styled-components';
-
-// Set base URL for API calls
-axios.defaults.baseURL = 'https://green-planet-moc.onrender.com';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { handleSuccessfulLogin } = useAuth();
+  const hasProcessed = useRef(false); // Prevents multiple executions
 
-  useEffect(() => {
-    const handleAuthCallback = async () => {
+// In AuthCallback.js
+useEffect(() => {
+  if (hasProcessed.current) return;
+  
+  const handleAuthCallback = async () => {
+    hasProcessed.current = true;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userId = urlParams.get('userId');
+    const error = urlParams.get('error');
+    
+    console.log('Auth callback received:', { token, userId, error });
+    
+    if (token && userId) {
       try {
-        // Get token from URL query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
+        // Store tokens first
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userId);
         
-        if (token) {
-          // Store token in localStorage
-          localStorage.setItem('token', token);
+        // Verify the token with backend to get user data
+        const response = await fetch('https://green-planet-moc.onrender.com/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
           
-          // Set default authorization header for axios
-          axios.defaults.headers.common['x-auth-token'] = token;
+          // Update auth state with the actual user data
+          handleSuccessfulLogin(token, userId, userData.user || userData);
           
-          // Get user info
-          const res = await axios.get('/api/auth/me');
-          console.log('User logged in:', res.data);
+          // Clear URL parameters
+          window.history.replaceState({}, document.title, window.location.pathname);
           
-          // Redirect to home page
+          toast.success('Login successful! Welcome back!', {
+            toastId: 'login-success'
+          });
+          
           navigate('/');
         } else {
-          throw new Error('No token received');
+          throw new Error('Token verification failed');
         }
-      } catch (err) {
-        console.error('Authentication error:', err);
-        navigate('/login', { state: { error: 'Authentication failed' } });
+      } catch (error) {
+        console.error('Login error:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        toast.error('Login failed. Please try again.', {
+          toastId: 'login-error'
+        });
+        navigate('/login');
       }
-    };
+    } else if (error) {
+      // Handle error
+      toast.error(`Login failed: ${error}`, {
+        toastId: 'login-error'
+      });
+      navigate('/login');
+    } else {
+      // No auth data found
+      toast.error('Invalid authentication response. Please try again.', {
+        toastId: 'login-invalid'
+      });
+      navigate('/login');
+    }
+  };
 
-    handleAuthCallback();
-  }, [navigate]);
+  handleAuthCallback();
+}, [navigate, handleSuccessfulLogin]);
 
   return (
     <Container>
-      <LoadingSpinner>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </LoadingSpinner>
-      <Message>Completing authentication...</Message>
+      <Spinner />
+      <Message>Completing your login...</Message>
+      <SubMessage>You'll be redirected in a moment</SubMessage>
     </Container>
   );
 };
+
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background: #f5f5f5;
+  height: 60vh;
+  text-align: center;
 `;
 
-const LoadingSpinner = styled.div`
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
+const Spinner = styled.div`
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #2e7d32;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 
-  div {
-    box-sizing: border-box;
-    display: block;
-    position: absolute;
-    width: 64px;
-    height: 64px;
-    margin: 8px;
-    border: 8px solid #2e7d32;
-    border-radius: 50%;
-    animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    border-color: #2e7d32 transparent transparent transparent;
-  }
-
-  div:nth-child(1) {
-    animation-delay: -0.45s;
-  }
-
-  div:nth-child(2) {
-    animation-delay: -0.3s;
-  }
-
-  div:nth-child(3) {
-    animation-delay: -0.15s;
-  }
-
-  @keyframes lds-ring {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
 
-const Message = styled.p`
-  margin-top: 20px;
-  font-size: 18px;
-  color: #333;
+const Message = styled.h2`
+  color: #2e7d32;
+  margin-bottom: 0.5rem;
+`;
+
+const SubMessage = styled.p`
+  color: #666;
 `;
 
 export default AuthCallback;

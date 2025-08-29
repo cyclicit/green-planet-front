@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import styled from 'styled-components';
 
+
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, user, loginWithGoogle, logout } = useAuth();
@@ -16,10 +18,11 @@ const Navbar = () => {
     setIsOpen(false);
   }, [location]);
 
-  const handleLogin = (e) => {
-    if (e) e.preventDefault();
-    loginWithGoogle();
-  };
+const handleLogin = (e) => {
+  if (e) e.preventDefault();
+  // Navigate to the login page instead
+  navigate('/login');
+};
 
   const handleLogout = () => {
     logout();
@@ -40,6 +43,13 @@ const Navbar = () => {
           <NavLink to="/products" onClick={handleNavClick}>Products</NavLink>
           <NavLink to="/blogs" onClick={handleNavClick}>Blogs</NavLink>
           <NavLink to="/donations" onClick={handleNavClick}>Donations</NavLink>
+
+
+          {isAuthenticated && (
+  <div style={{display: 'none'}}>
+    User data: {JSON.stringify(user)}
+  </div>
+)}
           
           {isAuthenticated ? (
             <>
@@ -48,7 +58,13 @@ const Navbar = () => {
                 Cart ({getCartItemsCount()})
               </NavLink>
               <UserMenu>
-                <UserAvatar src={user?.avatar} alt={user?.name} />
+                <UserAvatar 
+  src={user?.avatar || user?.picture || '/default-avatar.png'} 
+  alt={user?.name} 
+  onError={(e) => {
+    e.target.src = '/default-avatar.png';
+  }}
+/>
                 <UserName>{user?.name}</UserName>
                 <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
               </UserMenu>
@@ -155,6 +171,8 @@ const UserAvatar = styled.img`
   height: 40px;
   border-radius: 50%;
   border: 2px solid white;
+  object-fit: cover;
+  background-color: #ccc; // Fallback background
 
   @media (max-width: 768px) {
     width: 60px;

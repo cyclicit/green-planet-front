@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import axios from 'axios';
+import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
 const Donations = () => {
@@ -16,8 +16,8 @@ const Donations = () => {
   const fetchDonations = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/donations');
-      setDonations(res.data);
+      const data = await api.getDonations();
+      setDonations(data);
       setError('');
     } catch (err) {
       console.error('Error fetching donations:', err);
@@ -37,19 +37,11 @@ const Donations = () => {
       const message = prompt('Please leave a message for the donor:');
       if (!message) return;
 
-      await axios.post(`/api/donations/${donationId}/claim`, 
-        { message },
-        {
-          headers: {
-            'x-auth-token': localStorage.getItem('token')
-          }
-        }
-      );
-
+      await api.claimDonation(donationId, message);
       alert('Claim request sent successfully! The donor will review your request.');
       fetchDonations(); // Refresh the list
     } catch (error) {
-      alert('Error claiming donation: ' + (error.response?.data?.msg || error.message));
+      alert('Error claiming donation: ' + (error.message || 'Unknown error'));
     }
   };
 
