@@ -1,4 +1,3 @@
-// In src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Create the context
@@ -32,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const userData = await response.json();
         setIsAuthenticated(true);
-        setUser(userData.user || userData); // Handle both response structures
+        setUser(userData.user || userData);
         return true;
       } else {
         logout();
@@ -49,10 +48,13 @@ export const AuthProvider = ({ children }) => {
     window.location.href = 'https://green-planet-moc.onrender.com/api/auth/google';
   };
 
-  // Add this function to update auth state after successful login
+  // Update this function to handle refresh token
   const handleSuccessfulLogin = (token, userId, userData = null) => {
     localStorage.setItem('token', token);
     localStorage.setItem('userId', userId);
+    
+    // Note: refreshToken should be passed from the AuthCallback component
+    // where it's extracted from the URL parameters
     
     if (userData) {
       setUser(userData);
@@ -63,6 +65,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken'); // Remove refresh token on logout
     localStorage.removeItem('userId');
     setIsAuthenticated(false);
     setUser(null);
@@ -75,20 +78,26 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return false;
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        console.error('No refresh token available');
+        return false;
+      }
 
       const response = await fetch('https://green-planet-moc.onrender.com/api/auth/refresh', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ refreshToken }),
       });
 
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('token', data.token);
+        if (data.refreshToken) {
+          localStorage.setItem('refreshToken', data.refreshToken);
+        }
         return true;
       }
       return false;
@@ -104,19 +113,24 @@ export const AuthProvider = ({ children }) => {
       // Refresh token every 30 minutes
       const refreshInterval = setInterval(async () => {
         const token = localStorage.getItem('token');
-        if (token) {
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        if (token && refreshToken) {
           try {
             const response = await fetch('https://green-planet-moc.onrender.com/api/auth/refresh', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
               },
+              body: JSON.stringify({ refreshToken }),
             });
             
             if (response.ok) {
               const data = await response.json();
               localStorage.setItem('token', data.token);
+              if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken);
+              }
               console.log('Token refreshed successfully');
             }
           } catch (error) {

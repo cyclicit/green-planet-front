@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 
 const Dashboard = () => {
@@ -9,9 +8,6 @@ const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [donations, setDonations] = useState([]);
-  const [showProductForm, setShowProductForm] = useState(false);
-  const [showBlogForm, setShowBlogForm] = useState(false);
-  const [showDonationForm, setShowDonationForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   
@@ -22,7 +18,8 @@ const Dashboard = () => {
     price: '',
     category: '',
     stock: '',
-    image: null
+    sellerName: '' ,
+    ccc: '' // Added seller name field
   });
   
   const [blogForm, setBlogForm] = useState({
@@ -30,17 +27,17 @@ const Dashboard = () => {
     plantType: '',
     content: '',
     cultivationTips: '',
-    image: null
+    authorName: '' ,// Added author name field,
+    ccc:''
   });
   
   const [donationForm, setDonationForm] = useState({
     plantName: '',
     description: '',
     location: '',
-    images: []
-  });
+    donorName: '' ,
 
-  const { user } = useAuth();
+  });
 
   useEffect(() => {
     fetchDashboardData();
@@ -49,6 +46,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      
       const [productsData, blogsData, donationsData] = await Promise.all([
         api.getProducts(),
         api.getBlogs(),
@@ -66,64 +64,89 @@ const Dashboard = () => {
     }
   };
 
- const handleProductSubmit = async (e) => {
-  e.preventDefault();
+  const testBlogEndpoint = async () => {
   try {
     setLoading(true);
-    setMessage('');
+    const testData = {
+      title: 'Test Blog',
+      plantType: 'Test Plant',
+      content: 'Test content',
+      cultivationTips: 'Test tips',
+      authorName: 'Test Author'
+    };
     
-    // Create FormData for file upload
-    const formData = new FormData();
-    formData.append('name', productForm.name);
-    formData.append('description', productForm.description);
-    formData.append('price', productForm.price);
-    formData.append('category', productForm.category);
-    formData.append('stock', productForm.stock);
-    if (productForm.image) {
-      formData.append('image', productForm.image);
-    }
-
-    const newProduct = await api.createProduct(formData);
-    setProducts([...products, newProduct]);
-    setProductForm({
-      name: '',
-      description: '',
-      price: '',
-      category: '',
-      stock: '',
-      image: null
-    });
-    setShowProductForm(false);
-    toast.success('Product created successfully!');
+    const result = await api.testBlogEndpoint(testData);
+    console.log('Blog test result:', result);
+    toast.info('Blog test completed. Check console for details.');
   } catch (error) {
-    console.error('Error creating product:', error);
-    const errorMsg = error.message || 'Failed to create product';
-    toast.error(errorMsg);
-    setMessage(`Error: ${errorMsg}`);
+    console.error('Blog test failed:', error);
+    toast.error('Blog test failed: ' + error.message);
   } finally {
     setLoading(false);
   }
 };
 
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setMessage('');
+      
+      // Convert price and stock to numbers
+      const productData = {
+        ...productForm,
+        price: parseFloat(productForm.price),
+        stock: parseInt(productForm.stock),
+        sellerName: productForm.sellerName || 'Anonymous Seller' // Default name
+      };
+
+      const newProduct = await api.createProduct(productData);
+      setProducts([...products, newProduct]);
+      setProductForm({
+        name: '',
+        description: '',
+        price: '',
+        category: '',
+        stock: '',
+        sellerName: '',
+        ccc: ''
+      });
+      toast.success('Product created successfully!');
+    } catch (error) {
+      console.error('Error creating product:', error);
+      const errorMsg = error.message || 'Failed to create product';
+      toast.error(errorMsg);
+      setMessage(`Error: ${errorMsg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBlogSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       setMessage('');
-      const newBlog = await api.createBlog(blogForm);
+
+      const blogData = {
+        ...blogForm,
+        authorName: blogForm.authorName || 'Anonymous Gardener' // Default name
+      };
+
+      const newBlog = await api.createBlog(blogData);
       setBlogs([...blogs, newBlog]);
       setBlogForm({
         title: '',
         plantType: '',
         content: '',
         cultivationTips: '',
-        image: null
+        authorName: '',
+        ccc: ''
       });
       toast.success('Blog post created successfully!');
     } catch (error) {
       console.error('Error creating blog:', error);
-      const errorMsg = error.response?.data?.msg || error.message || 'Failed to create blog post';
+      const errorMsg = error.message || 'Failed to create blog post';
       toast.error(errorMsg);
       setMessage(`Error: ${errorMsg}`);
     } finally {
@@ -136,18 +159,25 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setMessage('');
-      const newDonation = await api.createDonation(donationForm);
+
+      const donationData = {
+        ...donationForm,
+        donorName: donationForm.donorName || 'Anonymous Donor' // Default name
+      };
+
+      const newDonation = await api.createDonation(donationData);
       setDonations([...donations, newDonation]);
       setDonationForm({
         plantName: '',
         description: '',
         location: '',
-        images: []
+        donorName: '',
+       
       });
       toast.success('Donation post created successfully!');
     } catch (error) {
       console.error('Error creating donation:', error);
-      const errorMsg = error.response?.data?.msg || error.message || 'Failed to create donation post';
+      const errorMsg = error.message || 'Failed to create donation post';
       toast.error(errorMsg);
       setMessage(`Error: ${errorMsg}`);
     } finally {
@@ -155,19 +185,11 @@ const Dashboard = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <Container>
-        <Message $error>Please log in to access the dashboard</Message>
-      </Container>
-    );
-  }
-
   return (
     <Container>
       <Header>
-        <Title>Dashboard</Title>
-        <Welcome>Welcome, {user.name}!</Welcome>
+        <Title>Green Planet Community</Title>
+        <Welcome>Share your plants, stories, and donations with our community!</Welcome>
       </Header>
 
       {message && (
@@ -280,13 +302,26 @@ const Dashboard = () => {
               />
             </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="product-image">Product Image</Label>
+             <FormGroup>
+              <Label htmlFor="product-seller">ccc</Label>
               <Input
-                id="product-image"
-                type="file"
-                onChange={(e) => setProductForm({...productForm, image: e.target.files[0]})}
-                accept="image/*"
+                id=""
+                type="text"
+                value={productForm.ccc}
+                onChange={(e) => setProductForm({...productForm, ccc: e.target.value})}
+                placeholder="ccc"
+                disabled={loading}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="product-seller">Seller Name</Label>
+              <Input
+                id="product-seller"
+                type="text"
+                value={productForm.sellerName}
+                onChange={(e) => setProductForm({...productForm, sellerName: e.target.value})}
+                placeholder="Your name (optional)"
                 disabled={loading}
               />
             </FormGroup>
@@ -309,6 +344,30 @@ const Dashboard = () => {
                 value={blogForm.title}
                 onChange={(e) => setBlogForm({...blogForm, title: e.target.value})}
                 required
+                disabled={loading}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="blog-author">Your Name</Label>
+              <Input
+                id="blog-author"
+                type="text"
+                value={blogForm.authorName}
+                onChange={(e) => setBlogForm({...blogForm, authorName: e.target.value})}
+                placeholder="Your name (optional)"
+                disabled={loading}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="blog-author">ccc</Label>
+              <Input
+                id="blog-author"
+                type="text"
+                value={blogForm.ccc}
+                onChange={(e) => setBlogForm({...blogForm, ccc: e.target.value})}
+                placeholder="ccc"
                 disabled={loading}
               />
             </FormGroup>
@@ -352,17 +411,6 @@ const Dashboard = () => {
               />
             </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="blog-image">Blog Image</Label>
-              <Input
-                id="blog-image"
-                type="file"
-                onChange={(e) => setBlogForm({...blogForm, image: e.target.files[0]})}
-                accept="image/*"
-                disabled={loading}
-              />
-            </FormGroup>
-
             <SubmitButton type="submit" disabled={loading}>
               {loading ? 'Publishing...' : 'Publish Blog'}
             </SubmitButton>
@@ -381,6 +429,18 @@ const Dashboard = () => {
                 value={donationForm.plantName}
                 onChange={(e) => setDonationForm({...donationForm, plantName: e.target.value})}
                 required
+                disabled={loading}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="donation-donor">Your Name</Label>
+              <Input
+                id="donation-donor"
+                type="text"
+                value={donationForm.donorName}
+                onChange={(e) => setDonationForm({...donationForm, donorName: e.target.value})}
+                placeholder="Your name (optional)"
                 disabled={loading}
               />
             </FormGroup>
@@ -411,28 +471,31 @@ const Dashboard = () => {
               />
             </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="donation-images">Plant Images</Label>
-              <Input
-                id="donation-images"
-                type="file"
-                multiple
-                onChange={(e) => setDonationForm({...donationForm, images: Array.from(e.target.files)})}
-                accept="image/*"
-                disabled={loading}
-              />
-            </FormGroup>
-
             <SubmitButton type="submit" disabled={loading}>
               {loading ? 'Posting...' : 'Post Donation'}
             </SubmitButton>
           </Form>
         )}
+
+        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+  <button 
+    onClick={testBlogEndpoint} 
+    disabled={loading}
+    style={{ padding: '10px 20px', margin: '5px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '4px' }}
+  >
+    Test Blog Endpoint
+  </button>
+  <button 
+    onClick={() => console.log('Current forms:', { productForm, blogForm, donationForm })} 
+    style={{ padding: '10px 20px', margin: '5px', background: '#388e3c', color: 'white', border: 'none', borderRadius: '4px' }}
+  >
+    Log Form Data
+  </button>
+</div>
       </Content>
     </Container>
   );
 };
-
 const Container = styled.div`
   max-width: 800px;
   margin: 2rem auto;

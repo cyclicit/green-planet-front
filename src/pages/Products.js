@@ -184,6 +184,7 @@ const Products = () => {
             <ProductInfo>
               <ProductCategory>{product.category}</ProductCategory>
               <ProductName>{product.name}</ProductName>
+              <ProductName>Seller: {product.ccc}</ProductName>
               
               <ProductDescription>
                 {product.description.length > 80 

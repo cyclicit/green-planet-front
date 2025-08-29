@@ -37,7 +37,7 @@ function App() {
               <Route path="/donations" element={<Donations />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/auth/success" element={<AuthCallback />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
             </Routes>
             <ToastContainer />
           </div>

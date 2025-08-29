@@ -34,6 +34,32 @@ const Blogs = () => {
     });
   };
 
+  // Function to determine if author is anonymous
+  const isAnonymousAuthor = (authorId) => {
+    return authorId === '000000000000000000000000';
+  };
+
+  // Get author name for display
+  const getAuthorName = (blog) => {
+    // If blog has authorName field (from your form), use that
+    if (blog.authorName) {
+      return blog.authorName;
+    }
+    
+    // If author is the anonymous ID, show "Anonymous Gardener"
+    if (isAnonymousAuthor(blog.author)) {
+      return 'Anonymous Gardener';
+    }
+    
+    // If author is a populated user object, use their name
+    if (blog.author && typeof blog.author === 'object' && blog.author.name) {
+      return blog.author.name;
+    }
+    
+    // Fallback
+    return 'Unknown Author';
+  };
+
   if (loading) {
     return (
       <Container>
@@ -97,6 +123,7 @@ const Blogs = () => {
             <BlogContent>
               <BlogCategory>{blog.plantType}</BlogCategory>
               <BlogTitle>{blog.title}</BlogTitle>
+              <BlogTitle>Writer: {blog.ccc}</BlogTitle>
               
               <BlogExcerpt>
                 {blog.content.length > 120 
@@ -106,18 +133,11 @@ const Blogs = () => {
               </BlogExcerpt>
               
               <BlogMeta>
-                <AuthorInfo>
-                  {blog.author && blog.author.avatar && (
-                    <AuthorAvatar src={blog.author.avatar} alt={blog.author.name} />
-                  )}
-                  <div>
-                    <AuthorName>{blog.author?.name || 'Unknown Author'}</AuthorName>
-                    <BlogDate>{formatDate(blog.createdAt)}</BlogDate>
-                  </div>
-                </AuthorInfo>
+               
                 
                 <BlogStats>
                   <Stat>❤️ {blog.likes ? blog.likes.length : 0} likes</Stat>
+                  {blog.comments && <Stat>💬 {blog.comments.length} comments</Stat>}
                 </BlogStats>
               </BlogMeta>
               
@@ -140,7 +160,20 @@ const Blogs = () => {
   );
 };
 
-// Reuse the same styled components from Products page with some adjustments
+// Add AnonymousAvatar styled component
+const AnonymousAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8f5e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  border: 2px solid #e0e0e0;
+`;
+
+// Reuse the rest of your styled components exactly as they are
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -340,7 +373,6 @@ const NoBlogsSubtext = styled.p`
   color: #888;
 `;
 
-// Reuse loading and error components from Products page
 const LoadingSpinner = styled.div`
   display: inline-block;
   position: relative;

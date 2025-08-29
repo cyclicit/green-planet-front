@@ -7,78 +7,84 @@ import styled from 'styled-components';
 const AuthCallback = () => {
   const navigate = useNavigate();
   const { handleSuccessfulLogin } = useAuth();
-  const hasProcessed = useRef(false); // Prevents multiple executions
+  const hasProcessed = useRef(false);
 
-// In AuthCallback.js
-useEffect(() => {
-  if (hasProcessed.current) return;
-  
-  const handleAuthCallback = async () => {
-    hasProcessed.current = true;
+  useEffect(() => {
+    if (hasProcessed.current) return;
     
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const userId = urlParams.get('userId');
-    const error = urlParams.get('error');
-    
-    console.log('Auth callback received:', { token, userId, error });
-    
-    if (token && userId) {
-      try {
-        // Store tokens first
-        localStorage.setItem('token', token);
-        localStorage.setItem('userId', userId);
-        
-        // Verify the token with backend to get user data
-        const response = await fetch('https://green-planet-moc.onrender.com/api/auth/verify', {
-          headers: {
-            'Authorization': `Bearer ${token}`
+    const handleAuthCallback = async () => {
+      hasProcessed.current = true;
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const refreshToken = urlParams.get('refreshToken');
+      const userId = urlParams.get('userId');
+      const error = urlParams.get('error');
+      
+      console.log('Auth callback received:', { token, refreshToken, userId, error });
+      
+      if (token && userId) {
+        try {
+          // Store the access token and userId
+          localStorage.setItem('token', token);
+          localStorage.setItem('userId', userId);
+          
+          // Store refresh token if available, otherwise we'll handle token refresh differently
+          if (refreshToken) {
+            localStorage.setItem('refreshToken', refreshToken);
           }
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
           
-          // Update auth state with the actual user data
-          handleSuccessfulLogin(token, userId, userData.user || userData);
-          
-          // Clear URL parameters
-          window.history.replaceState({}, document.title, window.location.pathname);
-          
-          toast.success('Login successful! Welcome back!', {
-            toastId: 'login-success'
+          // Verify the token with backend to get user data
+          const response = await fetch('https://green-planet-moc.onrender.com/api/auth/verify', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
           });
           
-          navigate('/');
-        } else {
-          throw new Error('Token verification failed');
+          if (response.ok) {
+            const userData = await response.json();
+            
+            // Update auth state with the actual user data
+            handleSuccessfulLogin(token, userId, userData.user || userData);
+            
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            toast.success('Login successful! Welcome back!', {
+              toastId: 'login-success'
+            });
+            
+            navigate('/');
+          } else {
+            throw new Error('Token verification failed');
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userId');
+          toast.error('Login failed. Please try again.', {
+            toastId: 'login-error'
+          });
+          navigate('/login');
         }
-      } catch (error) {
-        console.error('Login error:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        toast.error('Login failed. Please try again.', {
+      } else if (error) {
+        // Handle error
+        toast.error(`Login failed: ${error}`, {
           toastId: 'login-error'
         });
         navigate('/login');
+      } else {
+        // No auth data found
+        toast.error('Invalid authentication response. Please try again.', {
+          toastId: 'login-invalid'
+        });
+        navigate('/login');
       }
-    } else if (error) {
-      // Handle error
-      toast.error(`Login failed: ${error}`, {
-        toastId: 'login-error'
-      });
-      navigate('/login');
-    } else {
-      // No auth data found
-      toast.error('Invalid authentication response. Please try again.', {
-        toastId: 'login-invalid'
-      });
-      navigate('/login');
-    }
-  };
+    };
 
-  handleAuthCallback();
-}, [navigate, handleSuccessfulLogin]);
+    handleAuthCallback();
+  }, [navigate, handleSuccessfulLogin]);
 
   return (
     <Container>
@@ -88,7 +94,6 @@ useEffect(() => {
     </Container>
   );
 };
-
 
 const Container = styled.div`
   display: flex;
