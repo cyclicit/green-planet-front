@@ -71,41 +71,41 @@ export const api = {
     return this.request('/api/donations');
   },
   
-  // Product creation
-  createProduct(productData) {
-    const productWithUser = {
-      ...productData,
-      user: ANONYMOUS_USER_ID,
-      sellerName: productData.sellerName || 'Anonymous Seller'
-    };
-    
-    console.log('Creating product with data:', productWithUser);
-    
-    return this.request('/api/products', {
-      method: 'POST',
-      body: JSON.stringify(productWithUser),
-    });
-  },
+ 
 
-  // Blog creation - use ObjectId for author field
-  createBlog(blogData) {
-    const blogWithUser = {
-      title: blogData.title,
-      plantType: blogData.plantType,
-      content: blogData.content,
-      cultivationTips: blogData.cultivationTips,
-      user: ANONYMOUS_USER_ID,
-      author: ANONYMOUS_USER_ID, // Use ObjectId instead of string
-      ccc:blogData.ccc
-    };
-    
-    console.log('Creating blog with data:', blogWithUser);
-    
-    return this.request('/api/blogs', {
-      method: 'POST',
-      body: JSON.stringify(blogWithUser),
-    });
-  },
+
+  createProduct(productData) {
+  const productWithUser = {
+    ...productData,
+    user: ANONYMOUS_USER_ID,
+    sellerName: productData.sellerName || 'Anonymous Seller',
+    images: productData.image ? [productData.image] : [] // Add image to images array
+  };
+  
+  return this.request('/api/products', {
+    method: 'POST',
+    body: JSON.stringify(productWithUser),
+  });
+  
+},
+
+ createBlog(blogData) {
+  const blogWithUser = {
+    title: blogData.title,
+    plantType: blogData.plantType,
+    content: blogData.content,
+    cultivationTips: blogData.cultivationTips,
+    user: ANONYMOUS_USER_ID,
+    author: ANONYMOUS_USER_ID,
+    ccc: blogData.ccc,
+    images: blogData.image ? [blogData.image] : [] // Add image to images array
+  };
+  
+  return this.request('/api/blogs', {
+    method: 'POST',
+    body: JSON.stringify(blogWithUser),
+  });
+},
 
   // Donation creation
 createDonation(donationData) {
@@ -113,12 +113,11 @@ createDonation(donationData) {
     plantName: donationData.plantName,
     description: donationData.description,
     location: donationData.location,
-    ccc: donationData.ccc, // Add this line
+    ccc: donationData.ccc,
     user: ANONYMOUS_USER_ID,
-    donor: donationData.donorName || 'Anonymous Donor' // Use string instead of ObjectId
+    donor: donationData.donorName || 'Anonymous Donor',
+    images: donationData.image ? [donationData.image] : [] // Add image to images array
   };
-  
-  console.log('Creating donation with data:', donationWithUser);
   
   return this.request('/api/donations', {
     method: 'POST',

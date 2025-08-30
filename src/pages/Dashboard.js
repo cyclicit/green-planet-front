@@ -11,34 +11,39 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   
-  // Form state variables
-  const [productForm, setProductForm] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: '',
-    stock: '',
-    sellerName: '' ,
-    ccc: '' // Added seller name field
-  });
-  
-  const [blogForm, setBlogForm] = useState({
-    title: '',
-    plantType: '',
-    content: '',
-    cultivationTips: '',
-    authorName: '' ,// Added author name field,
-    ccc:''
-  });
-  
-  const [donationForm, setDonationForm] = useState({
-    plantName: '',
-    description: '',
-    location: '',
-    donorName: '' ,
-    ccc: '' // Add this field
+// Product form state
+const [productForm, setProductForm] = useState({
+  name: '',
+  description: '',
+  price: '',
+  category: '',
+  stock: '',
+  sellerName: '',
+  ccc: '',
+  image: '' // Add image field
+});
 
-  });
+// Blog form state  
+const [blogForm, setBlogForm] = useState({
+  title: '',
+  plantType: '',
+  content: '',
+  cultivationTips: '',
+  authorName: '',
+  ccc: '',
+  image: '' // Add image field
+});
+
+// Donation form state
+const [donationForm, setDonationForm] = useState({
+  plantName: '',
+  description: '',
+  location: '',
+  donorName: '',
+  ccc: '',
+  image: '' // Add image field
+});
+  
 
   useEffect(() => {
     fetchDashboardData();
@@ -84,6 +89,30 @@ const Dashboard = () => {
     toast.error('Blog test failed: ' + error.message);
   } finally {
     setLoading(false);
+  }
+};
+
+const handleImageUpload = (e, setFormFunction) => {
+  const file = e.target.files[0];
+  if (file) {
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size should be less than 2MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormFunction(prev => ({
+        ...prev,
+        image: reader.result // Base64 string
+      }));
+      toast.success('Image uploaded successfully!');
+    };
+    reader.onerror = () => {
+      toast.error('Failed to upload image');
+    };
+    reader.readAsDataURL(file);
   }
 };
 
@@ -327,6 +356,24 @@ const Dashboard = () => {
               />
             </FormGroup>
 
+            <FormGroup>
+  <Label htmlFor="product-image">Product Image</Label>
+  <Input
+    id="product-image"
+    type="file"
+    accept="image/*"
+    onChange={(e) => handleImageUpload(e, setProductForm)}
+    disabled={loading}
+  />
+  {productForm.image && (
+    <img 
+      src={productForm.image} 
+      alt="Preview" 
+      style={{width: '100px', height: '100px', marginTop: '10px', objectFit: 'cover'}}
+    />
+  )}
+</FormGroup>
+
             <SubmitButton type="submit" disabled={loading}>
               {loading ? 'Adding Product...' : 'Add Product'}
             </SubmitButton>
@@ -412,6 +459,25 @@ const Dashboard = () => {
               />
             </FormGroup>
 
+
+            <FormGroup>
+  <Label htmlFor="blog-image">Blog Image</Label>
+  <Input
+    id="blog-image"
+    type="file"
+    accept="image/*"
+    onChange={(e) => handleImageUpload(e, setBlogForm)}
+    disabled={loading}
+  />
+  {blogForm.image && (
+    <img 
+      src={blogForm.image} 
+      alt="Preview" 
+      style={{width: '100px', height: '100px', marginTop: '10px', objectFit: 'cover'}}
+    />
+  )}
+</FormGroup>
+
             <SubmitButton type="submit" disabled={loading}>
               {loading ? 'Publishing...' : 'Publish Blog'}
             </SubmitButton>
@@ -484,6 +550,24 @@ const Dashboard = () => {
         disabled={loading}
       />
     </FormGroup>
+
+    <FormGroup>
+  <Label htmlFor="donation-image">Plant Image</Label>
+  <Input
+    id="donation-image"
+    type="file"
+    accept="image/*"
+    onChange={(e) => handleImageUpload(e, setDonationForm)}
+    disabled={loading}
+  />
+  {donationForm.image && (
+    <img 
+      src={donationForm.image} 
+      alt="Preview" 
+      style={{width: '100px', height: '100px', marginTop: '10px', objectFit: 'cover'}}
+    />
+  )}
+</FormGroup>
 
     <SubmitButton type="submit" disabled={loading}>
       {loading ? 'Posting...' : 'Post Donation'}
