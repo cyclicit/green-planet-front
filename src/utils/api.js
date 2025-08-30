@@ -107,22 +107,22 @@ export const api = {
     });
   },
 
-  // Donation creation - check if donor field also expects ObjectId
-  createDonation(donationData) {
-    const donationWithUser = {
-      plantName: donationData.plantName,
-      description: donationData.description,
-      location: donationData.location,
-      user: ANONYMOUS_USER_ID,
-      donor: ANONYMOUS_USER_ID ,
-      
-    };
-    
-    console.log('Creating donation with data:', donationWithUser);
-    
-    return this.request('/api/donations', {
-      method: 'POST',
-      body: JSON.stringify(donationWithUser),
-    });
-  }
+  // Donation creation
+createDonation(donationData) {
+  const donationWithUser = {
+    plantName: donationData.plantName,
+    description: donationData.description,
+    location: donationData.location,
+    ccc: donationData.ccc, // Add this line
+    user: ANONYMOUS_USER_ID,
+    donor: donationData.donorName || 'Anonymous Donor' // Use string instead of ObjectId
+  };
+  
+  console.log('Creating donation with data:', donationWithUser);
+  
+  return this.request('/api/donations', {
+    method: 'POST',
+    body: JSON.stringify(donationWithUser),
+  });
+}
 };

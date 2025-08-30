@@ -183,15 +183,10 @@ const Products = () => {
             
             <ProductInfo>
               <ProductCategory>{product.category}</ProductCategory>
-              <ProductName>{product.name}</ProductName>
+              <ProductName>Plant: {product.name}</ProductName>
               <ProductName>Seller: {product.ccc}</ProductName>
               
-              <ProductDescription>
-                {product.description.length > 80 
-                  ? `${product.description.substring(0, 80)}...` 
-                  : product.description
-                }
-              </ProductDescription>
+
               
               <ProductMeta>
                 <ProductPrice>${product.price}</ProductPrice>

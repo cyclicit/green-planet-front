@@ -138,12 +138,12 @@ const Donations = () => {
                 <DetailItem>
                   <DetailLabel>📍 Location</DetailLabel>
                   <DetailValue>{donation.location}</DetailValue>
-                   <DetailValue>{donation.ccc}</DetailValue>
+                  
                 </DetailItem>
                 
                 <DetailItem>
                   <DetailLabel>👤 Donor</DetailLabel>
-                  <DetailValue>{donation.donor?.name || 'Anonymous'}</DetailValue>
+                  <DetailValue>{donation.ccc}</DetailValue>
                 </DetailItem>
                 
                 <DetailItem>

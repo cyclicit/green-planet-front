@@ -121,8 +121,8 @@ const Blogs = () => {
             </BlogImage>
             
             <BlogContent>
-              <BlogCategory>{blog.plantType}</BlogCategory>
-              <BlogTitle>{blog.title}</BlogTitle>
+              <BlogCategory>Plant: {blog.plantType}</BlogCategory>
+              <BlogTitle>Title: {blog.title}</BlogTitle>
               <BlogTitle>Writer: {blog.ccc}</BlogTitle>
               
               <BlogExcerpt>

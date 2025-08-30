@@ -36,6 +36,7 @@ const Dashboard = () => {
     description: '',
     location: '',
     donorName: '' ,
+    ccc: '' // Add this field
 
   });
 
@@ -417,65 +418,78 @@ const Dashboard = () => {
           </Form>
         )}
 
-        {activeTab === 'donations' && (
-          <Form onSubmit={handleDonationSubmit}>
-            <FormTitle>Post a Plant for Donation</FormTitle>
-            
-            <FormGroup>
-              <Label htmlFor="donation-plantName">Plant Name *</Label>
-              <Input
-                id="donation-plantName"
-                type="text"
-                value={donationForm.plantName}
-                onChange={(e) => setDonationForm({...donationForm, plantName: e.target.value})}
-                required
-                disabled={loading}
-              />
-            </FormGroup>
+       {activeTab === 'donations' && (
+  <Form onSubmit={handleDonationSubmit}>
+    <FormTitle>Post a Plant for Donation</FormTitle>
+    
+    <FormGroup>
+      <Label htmlFor="donation-plantName">Plant Name *</Label>
+      <Input
+        id="donation-plantName"
+        type="text"
+        value={donationForm.plantName}
+        onChange={(e) => setDonationForm({...donationForm, plantName: e.target.value})}
+        required
+        disabled={loading}
+      />
+    </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="donation-donor">Your Name</Label>
-              <Input
-                id="donation-donor"
-                type="text"
-                value={donationForm.donorName}
-                onChange={(e) => setDonationForm({...donationForm, donorName: e.target.value})}
-                placeholder="Your name (optional)"
-                disabled={loading}
-              />
-            </FormGroup>
+    <FormGroup>
+      <Label htmlFor="donation-ccc">CCC *</Label>
+      <Input
+        id="donation-ccc"
+        type="text"
+        value={donationForm.ccc}
+        onChange={(e) => setDonationForm({...donationForm, ccc: e.target.value})}
+        required
+        placeholder="CCC value"
+        disabled={loading}
+      />
+    </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="donation-description">Description *</Label>
-              <Textarea
-                id="donation-description"
-                rows="4"
-                value={donationForm.description}
-                onChange={(e) => setDonationForm({...donationForm, description: e.target.value})}
-                required
-                placeholder="Describe the plant's condition, size, and any special care instructions..."
-                disabled={loading}
-              />
-            </FormGroup>
+    <FormGroup>
+      <Label htmlFor="donation-donor">Your Name</Label>
+      <Input
+        id="donation-donor"
+        type="text"
+        value={donationForm.donorName}
+        onChange={(e) => setDonationForm({...donationForm, donorName: e.target.value})}
+        placeholder="Your name (optional)"
+        disabled={loading}
+      />
+    </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="donation-location">Location *</Label>
-              <Input
-                id="donation-location"
-                type="text"
-                value={donationForm.location}
-                onChange={(e) => setDonationForm({...donationForm, location: e.target.value})}
-                required
-                placeholder="Your city or area for pickup"
-                disabled={loading}
-              />
-            </FormGroup>
+    <FormGroup>
+      <Label htmlFor="donation-description">Description *</Label>
+      <Textarea
+        id="donation-description"
+        rows="4"
+        value={donationForm.description}
+        onChange={(e) => setDonationForm({...donationForm, description: e.target.value})}
+        required
+        placeholder="Describe the plant's condition, size, and any special care instructions..."
+        disabled={loading}
+      />
+    </FormGroup>
 
-            <SubmitButton type="submit" disabled={loading}>
-              {loading ? 'Posting...' : 'Post Donation'}
-            </SubmitButton>
-          </Form>
-        )}
+    <FormGroup>
+      <Label htmlFor="donation-location">Location *</Label>
+      <Input
+        id="donation-location"
+        type="text"
+        value={donationForm.location}
+        onChange={(e) => setDonationForm({...donationForm, location: e.target.value})}
+        required
+        placeholder="Your city or area for pickup"
+        disabled={loading}
+      />
+    </FormGroup>
+
+    <SubmitButton type="submit" disabled={loading}>
+      {loading ? 'Posting...' : 'Post Donation'}
+    </SubmitButton>
+  </Form>
+)}
 
         <div style={{ marginBottom: '20px', textAlign: 'center' }}>
   <button 
